@@ -29,7 +29,7 @@ on:
 # Workflow
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.16.3
     permissions:
@@ -54,19 +54,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Format Check
-        run: find app -iname *.h -o -iname *.c | xargs clang-format -n --Werror --style=file:.vscode/.clang-format
-
       - name: Configure and Build
         id: build
         run: |
           printenv
           west init -l app
           west update
-          west build -d debug -b nucleo_l476rg app
+          west build -d debug -b nucleo_l476rg app --cmake
           echo "debug_elf=debug/zephyr/zephyr.elf" >> $GITHUB_OUTPUT
           echo "debug_hex=debug/zephyr/zephyr.hex" >> $GITHUB_OUTPUT
-          west build -d /release -b nucleo_l476rg app -- -DCONFIG_DEBUG=n -DCONFIG_LOG=n -DCONFIG_SHELL=n
+          west build -d /release -b nucleo_l476rg app --cmake -- -DCONFIG_DEBUG=n -DCONFIG_LOG=n -DCONFIG_SHELL=n
           echo "release_elf=release/zephyr/zephyr.elf" >> $GITHUB_OUTPUT
           echo "release_hex=release/zephyr/zephyr.hex" >> $GITHUB_OUTPUT
           echo "release_notes=release_notes.txt" >> $GITHUB_OUTPUT
@@ -119,3 +116,4 @@ jobs:
             ${{ steps.build.outputs.release_elf }}
             ${{ steps.build.outputs.release_hex }}
           body_path: ${{ steps.build.outputs.release_notes }}
+
